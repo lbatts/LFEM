@@ -1,0 +1,59 @@
+---
+title: "Basic plot example"
+author: "Luke Batts"
+date: "23 October 2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+A short vignette showing how to take the results of a single model and plot survey length frequency distributions along with fitted distributions estimated by the basic model
+
+
+#Loading data and formatting
+
+WD should be "LFEM/vignettes" folder.
+```{r}
+getwd()
+
+```
+```{r, warning=F , message=F}
+
+#install.packages("gridBase")
+library(grid)
+library(gridBase)
+
+load("../data/test.Rdata")
+load("../data/lfdat_MON.Rdata")
+
+source("../R/plot_lfem.R")
+
+```
+
+The length frequency data and the model we've just run.  These can then be input into the `plot.lfem` function.
+```{r}
+
+args(plot.lfem)
+```
+* `model` is the model
+* `Lengths` is the same data imput used for the model run(s)
+* `Survey.num` allows selection of a particular survey you would like to plot.  Should be the number of the survey if their names were arranged alphabetically.  In this case it is the IE-IGFS but could also be EVHOE(1) or SP-PORC(2) for the anglerfish example.
+* `xlimit` allows the xlimit of the length frequency histograms to be set.  Allowing you to focus on the section of the histograms where more data is available.
+
+```{r}
+
+plot.lfem(model=test,Lengths=lfdat,Survey.num=2,xlimit=140)
+```
+
+NB If there there is no model and you have all results stored in lists from a sensitivity analysis then 
+
+#####Note that the coohort progression lines will only be in the right place if plot window dimensions are adjusted before plotting.
+
+
+
+
+ 
