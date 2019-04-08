@@ -34,14 +34,14 @@ source("../R/plot_lfem.R")
 
 ```
 
-The length frequency data and the model we've just run.  These can then be input into the `plot.lfem` function.
+Load the length frequency data and the model we've just run.  These can then be input into the `plot.lfem` function.
 ```{r}
 
 args(plot.lfem)
 ```
 * `model` is the model
 * `Lengths` is the same data imput used for the model run(s)
-* `Survey.num` allows selection of a particular survey you would like to plot.  Should be the number of the survey if their names were arranged alphabetically.  In this case it is the IE-IGFS but could also be EVHOE(1) or SP-PORC(2) for the anglerfish example.
+* `Survey.num` allows selection of a particular survey you would like to plot.  Should be the number of the survey if their names were arranged alphabetically.  In this case it is the IE-IGFS but could also be EVHOE(1) or SP-PORC(3) for the anglerfish example.
 * `xlimit` allows the xlimit of the length frequency histograms to be set.  Allowing you to focus on the section of the histograms where more data is available.
 
 ```{r}
@@ -49,9 +49,16 @@ args(plot.lfem)
 plot.lfem(model=test,Lengths=lfdat,Survey.num=2,xlimit=140)
 ```
 
-NB If there there is no model and you have all results stored in lists from a sensitivity analysis then 
+#####If there there is no model and you have all results stored in lists from a sensitivity analysis then just create a list with Mu, Sd and Lambda
 
-#####Note that the coohort progression lines will only be in the right place if plot window dimensions are adjusted before plotting.
+```{r,eval=F}
+
+plot.obj<-list(Mu=test$Mu,Sd=test$Sd,Lambda= test$Lambda)
+
+plot.lfem(plot.obj,Lengths=lfdat,Survey.num=2,xlimit=140)
+```
+
+#####Note that the cohort progression lines will only be in the right place if plot window dimensions are adjusted before plotting.
 
 
 
