@@ -13,7 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 A short vignette showing how to run the basic length frequency analysis method on an example dataset.  The example dataset in this case is a cleaned up version of white-bellied anglerfish data from the surveys that cover ICES subarea VII and divisions VIII a,b,d stock.
 
-This method allows multiple surveys from different times of year.  Also worth noting is starting parameter inputs should be approximate for the survey which comes first alphabetically.
+This method allows multiple surveys from different times of year.
 
 
 #Loading data and formatting
@@ -33,7 +33,7 @@ library(ggplot2)
 library(data.table) 
 load("../data/lfdat_MON.RData")
 ```
-The dataframe should be formatted as below for the function, with four columns: Survey, Year, Length and RF (raising factor).  The data has been aggreagted by year, survey and length so as to compact the dataframe for speed. Observed log-likelihood is the same if individual fish lengths for each haul were used.
+The dataframe should be formatted as below for the function, with four columns: Survey, Year, Length and RF (raising factor).  The data has been aggregated by year, survey and length so as to compact the dataframe for speed. Observed log-likelihood is the same if individual fish lengths for each haul were used.
 
 ```{r,echo=F}
 head(lfdat)
@@ -44,6 +44,9 @@ Objective functions have already been compiled so no need to do this again but h
 ```{r,warning=F , message=F}
 
 dllroot<-paste0(dirname(getwd()),'/tmb/')
+```
+
+```{r, eval=F}
 compile(paste0(dllroot,"constantSD.cpp"))
 compile(paste0(dllroot,"linearSD.cpp"))
 compile(paste0(dllroot,"constantSD_OBSLL.cpp"))
@@ -69,10 +72,10 @@ How many years of data in each survey?  What year does data for each survey star
   year0<-c(2003,2003,2003)
 ```
 
-age0 is the assumed age of the first component in each of the surveys.  In this case we assume that for the first two surveys alphabetically (EVHOE and IE-IGFS) that the first component observed in the length frequency data is approximately 0.875 years old. (i.e.  the midpoint of the fourth quarter of the year when these surveys are conducted)
+age1 is the assumed age of the first component in each of the surveys.  In this case we assume that for the first two surveys alphabetically (EVHOE and IE-IGFS) that the first component observed in the length frequency data is approximately 0.875 years old, using the common assumption fish are born on the 1st of Jan (i.e.  the midpoint of the fourth quarter of the year when these surveys are conducted).  SP-PORC is mainly conducted over september so we set the age1 at 0.73 
 
 ```{r}
-age0<-c(0.875,0.875,0.73) 
+age1<-c(0.875,0.875,0.73) 
     
 ```
   
@@ -95,7 +98,7 @@ If rel.tolerance is set at 1e-8 as is standard then this may take a while to con
 
 ```{r,eval=F}
 
-test<-basic(year0=year0,no.years=no.years,age0=age0,L=(130),l=16,k.reparam=0.83,
+test<-basic(year0=year0,no.years=no.years,age1=age1,L=(130),l=16,k.reparam=0.83,
 sigma.start=c(6,10),No.comp=9,Lengths=lfdat,niter=10000,
 SD.type=3,rel.tolerance=1e-8,dllroot=dllroot,sub.Obs.lim = 100)
 
@@ -145,7 +148,10 @@ sub_aic(test)
 Here's some inelegant code to conduct a sensitivity analysis on some of the starting parameters.  You may want to leave this running over night as it is over 1400 model runs!!
 
 ```{r,eval=F}
-df<-expand.grid(k = seq(0.7,0.99,length=30), L =seq(100,130,length=4),No.comp =seq(6,14,length=9),krep.final=NA,K.final=NA,Linf.final=NA,tzero.final=NA,l.final=NA,obs.ll=NA,iclbic=NA,aic=NA,bic=NA,Entropy=NA,sub.aic=NA)
+df<-expand.grid(k = seq(0.7,0.99,length=30),L=seq(100,130,length=4),
+No.comp=seq(6,14,length=9),krep.final=NA,K.final=NA,Linf.final=NA,
+tzero.final=NA,l.final=NA,obs.ll=NA,iclbic=NA,aic=NA,bic=NA,
+Entropy=NA,sub.aic=NA)
 
 mu.lst<-list(list())
 sd.lst<-list(list())
@@ -154,8 +160,8 @@ lambda.lst<-list(list())
 
 for(i in 1:dim(df)[1]){
   
-  result_TMB<-basic(year0=year0,no.years=no.years, age0=age0, L=df[i,2], l=16, k.reparam=df[i,1], sigma.start=c(10),No.comp=df[i,3],
-                                                       Lengths=lfdata2,niter=10000,SD.type=4,rel.tolerance=1e-8)
+result_TMB<-basic(year0=year0,no.years=no.years,age1=age1,L=df[i,2],l=16,k.reparam=df[i,1],
+sigma.start=c(10),No.comp=df[i,3],Lengths=lfdat,niter=10000,SD.type=4,rel.tolerance=1e-8)
   
   df$K.final[i]<-result_TMB$K 
   df$l.final[i]<-result_TMB$l
