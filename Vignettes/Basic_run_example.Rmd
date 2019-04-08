@@ -98,7 +98,7 @@ If rel.tolerance is set at 1e-8 as is standard then this may take a while to con
 
 ```{r,eval=F}
 
-test<-basic(year0=year0,no.years=no.years,age1=age1,L=(130),l=16,k.reparam=0.83,
+test<-basic.LFEM(year0=year0,no.years=no.years,age1=age1,L=(130),l=16,k.reparam=0.83,
 sigma.start=c(6,10),No.comp=9,Lengths=lfdat,niter=10000,
 SD.type=3,rel.tolerance=1e-8,dllroot=dllroot,sub.Obs.lim = 100)
 

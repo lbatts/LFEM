@@ -6,7 +6,7 @@
 ## Note L and l inputs should be approximate for the survey which comes first alphabetically
 ## 
 ##-----------------------------
-   basic<-function(year0,no.years, age0, L, l, k.reparam, sigma.start ,No.comp, Lengths,niter,SD.type,rel.tolerance,dllroot,sub.Obs.lim)    {
+   basic.LFEM<-function(year0,no.years, age1, L, l, k.reparam, sigma.start ,No.comp, Lengths,niter,SD.type,rel.tolerance,dllroot,sub.Obs.lim)    {
      
      ### year 0 should be vector of length(no.surveys)
      ### age zero should be vector of all surveys age zeros, this idicates where to calculate mus from
@@ -59,14 +59,14 @@
        
        linf.em<-(L.em-(l.em*k.reparam.em^(No.comp-1)))/(1-(k.reparam.em^(No.comp-1)))
        K.em <- -log(k.reparam.em)  
-       tzero.em<-  age0[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
+       tzero.em<-  age1[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
        
        mu.em.array<-array(NA,dim=c(1,No.comp,no.surveys))
        
        
        
-       mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age0-tzero.em)))
-       mu.em.array[1,No.comp,]<- linf.em*(1-exp(-K.em*((age0+(No.comp-1))-tzero.em)))
+       mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age1-tzero.em)))
+       mu.em.array[1,No.comp,]<- linf.em*(1-exp(-K.em*((age1+(No.comp-1))-tzero.em)))
        
        for(i in 2:(No.comp)){
          mu.em.array[,i,] <- mu.em.array[,i-1,] + ((mu.em.array[1,No.comp,] - mu.em.array[1,1,])*(((k.reparam^(i-2))-(k.reparam^(i-1)))/(1-(k.reparam^((No.comp-1))))))
@@ -89,14 +89,14 @@
        
        linf.em<-(L.em-(l.em*k.reparam.em^(No.comp-1)))/(1-(k.reparam.em^(No.comp-1)))
        K.em <- -log(k.reparam.em)  
-       tzero.em<-  age0[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
+       tzero.em<-  age1[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
        
        mu.em.array<-array(NA,dim=c(1,No.comp,no.surveys))
        
        
        
-       mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age0-tzero.em)))
-       mu.em.array[1,No.comp,]<- linf.em*(1-exp(-K.em*((age0+(No.comp-1))-tzero.em)))
+       mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age1-tzero.em)))
+       mu.em.array[1,No.comp,]<- linf.em*(1-exp(-K.em*((age1+(No.comp-1))-tzero.em)))
        
        for(i in 2:(No.comp)){
          mu.em.array[,i,] <- mu.em.array[,i-1,] + ((mu.em.array[1,No.comp,] - mu.em.array[1,1,])*(((k.reparam^(i-2))-(k.reparam^(i-1)))/(1-(k.reparam^((No.comp-1))))))
@@ -165,7 +165,7 @@
              
              dyn.load(dynlib(paste0(dllroot,"constantSD_OBSLL")))
              loglik_nonvar_OBSLL <- MakeADFun(
-               data = list(Lengths=Lengths_matrix,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age0), 
+               data = list(Lengths=Lengths_matrix,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age1), 
                parameters = list(log_l=log(l.em),log_L=log(L.em),logit_k_reparam=qlogis(k.reparam.em),log_sigma=log(sigma.em)),  
                DLL = "constantSD_OBSLL",silent=T,
                hessian = T)
@@ -180,7 +180,7 @@
              
              dyn.load(dynlib(paste0(dllroot,"linearSD_OBSLL")))
              loglik_var_OBSLL <- MakeADFun(
-               data = list(Lengths=Lengths_matrix,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age0), 
+               data = list(Lengths=Lengths_matrix,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age1), 
                parameters = list(log_l=log(l.em),log_L=log(L.em),logit_k_reparam=qlogis(k.reparam.em),log_s=log(s.em),log_S=log(S.em)),  
                DLL = "linearSD_OBSLL",silent=T,
                hessian = T)
@@ -200,7 +200,7 @@
            
            
            return(list(obs.llike=obs.llike,k.reparam.obs=k.reparam.obs,L.obs=L.obs,K.obs=K.obs,Linf.obs=Linf.obs,Mu=mu.em.array,Sd=sd.em,Lambda=lambda.array,
-                       k.reparam=k.reparam.em,K=K.em,Linf=linf.em,tzero=tzero.em,l=l.em,L=L.em,sigma=sigma.em, Lambda.params=no.lambda.param,sample.size=samplesize,Entropy=EN,age0=age0,srep=srep,sub.Obs=sub.Obs))
+                       k.reparam=k.reparam.em,K=K.em,Linf=linf.em,tzero=tzero.em,l=l.em,L=L.em,sigma=sigma.em, Lambda.params=no.lambda.param,sample.size=samplesize,Entropy=EN,age1=age1,srep=srep,sub.Obs=sub.Obs))
            #stop("converged")
          }
        }   
@@ -221,7 +221,7 @@
        if(SD.type==3){
          
          loglik_var_schun <- MakeADFun(
-           data = list(Lengths=Lengths_matrix,tau=tau.mat,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age0), 
+           data = list(Lengths=Lengths_matrix,tau=tau.mat,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age1), 
            parameters = list(log_l=log(l.em),log_L=log(L.em),logit_k_reparam=qlogis(k.reparam.em),log_s=log(s.em),log_S=log(S.em)),  
            DLL = "linearSD",silent=T)
          
@@ -240,11 +240,11 @@
          
          linf.em<-(L.em-(l.em*k.reparam.em^(No.comp-1)))/(1-(k.reparam.em^(No.comp-1)))
          K.em <- -log(k.reparam.em)  
-         tzero.em<-  age0[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
+         tzero.em<-  age1[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
          
          
-         mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age0-tzero.em)))
-         mu.em.array[1,No.comp,]<- linf.em*(1-exp(-K.em*((age0+(No.comp-1))-tzero.em)))
+         mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age1-tzero.em)))
+         mu.em.array[1,No.comp,]<- linf.em*(1-exp(-K.em*((age1+(No.comp-1))-tzero.em)))
          
          for(i in 2:(No.comp)){
            mu.em.array[,i,] <- mu.em.array[,i-1,] + ((mu.em.array[1,No.comp,] - mu.em.array[1,1,])*(((k.reparam.em^(i-2))-(k.reparam.em^(i-1)))/(1-(k.reparam.em^((No.comp-1))))))
@@ -264,7 +264,7 @@
        }else if(SD.type==4) {
          
          loglik_nonvar <- MakeADFun(
-           data = list(Lengths=Lengths_matrix,tau=tau.mat,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age0), 
+           data = list(Lengths=Lengths_matrix,tau=tau.mat,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age1), 
            parameters = list(log_l=log(l.em),log_L=log(L.em),logit_k_reparam=qlogis(k.reparam.em),log_sigma=log(sigma.em)),  
            DLL = "constantSD",silent=T)
          
@@ -278,11 +278,11 @@
          sigma.em<-exp(par1[4])          
          linf.em<-(L.em-(l.em*k.reparam.em^(No.comp-1)))/(1-(k.reparam.em^(No.comp-1)))
          K.em <- -log(k.reparam.em)  
-         tzero.em<-  age0[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
+         tzero.em<-  age1[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
          
          
-         mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age0-tzero.em)))
-         mu.em.array[1,No.comp,]<- linf.em*(1-exp(-K.em*((age0+(No.comp-1))-tzero.em)))
+         mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age1-tzero.em)))
+         mu.em.array[1,No.comp,]<- linf.em*(1-exp(-K.em*((age1+(No.comp-1))-tzero.em)))
          
          for(i in 2:(No.comp)){
            mu.em.array[,i,] <- mu.em.array[,i-1,] + ((mu.em.array[1,No.comp,] - mu.em.array[1,1,])*(((k.reparam.em^(i-2))-(k.reparam.em^(i-1)))/(1-(k.reparam.em^((No.comp-1))))))
