@@ -159,7 +159,13 @@ Mu's and Sd's are now matrices rather than a vector for each survey.  If we take
 hier_test$Mu.all.years[,,1]
 ```
 
-
+We can plot the results with same function as we did the basic example.
+```{r}
+source("../R/plot_lfem.R")
+library(grid)
+library(gridBase)
+plot.lfem(model=hier_test,Lengths=lfdat,Survey.num=2,xlimit=140)
+```
 
 
 
