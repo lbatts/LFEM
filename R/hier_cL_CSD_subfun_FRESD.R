@@ -1,4 +1,4 @@
-hier_constantSD_L<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.comp, Lengths,niter,rel.tolerance)
+hier_constantSD_L_FRESD<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.comp, Lengths,niter,rel.tolerance,sdl,sdL)
   
       {
   
@@ -8,8 +8,8 @@ hier_constantSD_L<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,N
     stop("One sigma.start value needed")
   }
   
- 
-  En<-NA
+  EN<-NA
+  
   Lengths_matrix<-data.matrix(Lengths)####need this matrix for TMB model...converts survey characters to numbers in alphbetical order     
   Lengths_matrix[,2]<-Lengths_matrix[,2] - (min(year0))    ###sets up "years" column for use within TMB model..i.e. first year == 0 
   Lengths_matrix[,1]<-Lengths_matrix[,1] - 1               ####sets up "surveys" coumn for use within TMB model...i.e. first survey==0
@@ -92,8 +92,8 @@ hier_constantSD_L<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,N
   lL.mat.em<-matrix(NA,ncol=2,nrow=max.years)
   lL.mat.em[,1]<-0
   lL.mat.em[,2]<-0
-  raw.sd.l.em<-0
-  raw.sd.L.em<-0
+  raw.sd.l.em<-sdl
+  raw.sd.L.em<-sdL
   raw.rho.em<-0
 
    sd.em<-rep(sigma.em,No.comp)
@@ -141,14 +141,14 @@ print(k)
     
     random=c("lL"),
     
-    #map = list(raw_rho=factor(NA),logit_k_reparam=factor(NA)),#
+    map = list(raw_sdl=factor(NA),raw_sdL=factor(NA)),#
     
     DLL = "hier_cL_CSD_OBSLL",
     
     silent = TRUE)
   
   
-  -obj_LL$fn(obj_LL$par)[1]
+  #-obj_LL$fn(obj_LL$par)[1]
     
         
         obs.llike[k] <- -obj_LL$fn(obj_LL$par)[1]
@@ -156,8 +156,6 @@ print(k)
         
     if(k > 2 ){
         if(abs(obs.llike[k] - obs.llike[k-1]) <  abs(obs.llike[k-1] * rel.tolerance)){
-          
-          #maximise obs LL
           
           obs.opt <- nlminb(start=obj_LL$par,objective=obj_LL$fn,gradient=obj_LL$gr,silent=F)
           
@@ -215,7 +213,7 @@ print(k)
          
          random=c("lL"),
          
-         #map = list(raw_rho=factor(NA)),#
+         map = list(raw_sdl=factor(NA),raw_sdL=factor(NA)),#
          
          DLL = "hier_cL_CSD",silent=T)
  
@@ -230,16 +228,16 @@ par1<-rep$par.fixed
 l.mean.em<-exp(par1[1])
 L.mean.em<-exp(par1[2])
 
-raw.sd.l.em<-par1[3]         
-raw.sd.L.em<-par1[4]
-sd.l.em<-exp(par1[3])         
-sd.L.em<-exp(par1[4])
+#raw.sd.l.em<-par1[3]         
+#raw.sd.L.em<-par1[3]
+sd.l.em<-exp(raw.sd.l.em)         
+sd.L.em<-exp(raw.sd.L.em)
 
-raw.rho.em<-par1[5]
-rho.em<- -1 + 2 * plogis(par1[5])
+raw.rho.em<-par1[3]
+rho.em<- -1 + 2 * plogis(par1[3])
 
-k.reparam.em <- plogis(par1[6])
-sigma.em<-exp(par1[7])              
+k.reparam.em <- plogis(par1[4])
+sigma.em<-exp(par1[5])              
 
 lL.mat.em<- matrix(srep[rownames(srep) == "lL", "Estimate"], ncol = 2)
 

@@ -1,4 +1,4 @@
-hier_linearSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.comp, Lengths,niter,rel.tolerance)
+hier_linearSD_yk_FRESD<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.comp, Lengths,niter,rel.tolerance,sdl,sdk)
   
       {
 
@@ -9,7 +9,6 @@ hier_linearSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No
   }
   
   EN <- NA
-  
   Lengths_matrix<-data.matrix(Lengths)####need this matrix for TMB model...converts survey characters to numbers in alphbetical order     
   Lengths_matrix[,2]<-Lengths_matrix[,2] - (min(year0))    ###sets up "years" column for use within TMB model..i.e. first year == 0 
   Lengths_matrix[,1]<-Lengths_matrix[,1] - 1               ####sets up "surveys" coumn for use within TMB model...i.e. first survey==0
@@ -40,11 +39,11 @@ hier_linearSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No
   k.par.vec.plus <- rep(k.reparam,max.years.comp)#temporary for ease of filling starting array, is cut down for algorithm
   
 
- #compile("hier_yk_LSD.cpp")
+ #compile("hier_model_version_linearSD_plusyearlyk_adj.cpp")
  #compile("hier_model_version_linearSD_plusyearlyk_OBSLL__adj.cpp")
  
- dyn.load(dynlib(paste0(dllroot,"hier_yk_LSD")))
- dyn.load(dynlib(paste0(dllroot,"hier_yk_LSD_OBSLL")))
+  dyn.load(dynlib(paste0(dllroot,"hier_yk_LSD")))
+  dyn.load(dynlib(paste0(dllroot,"hier_yk_LSD_OBSLL")))
  
  for(j in 1:no.surveys){
    mu.arr.bff[1:max.years.backforfill,1,j]<- rep(l.var[j], max.years.backforfill)
@@ -94,8 +93,8 @@ hier_linearSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No
  lk.reparam.mat.em<-matrix(NA,ncol=2,nrow=max.years)
  lk.reparam.mat.em[,1]<-0
  lk.reparam.mat.em[,2]<-0
- raw.sd.l.em<--5            
- raw.sd.k.reparam.em<--5
+ raw.sd.l.em<-sdl            
+ raw.sd.k.reparam.em<-sdk
  raw.rho.em<-0
  
  sigma.em<-sigma.start
@@ -149,6 +148,8 @@ for(k in 1:niter){
     
     random=c("lk"),
     
+    map = list(raw_sdl = factor(NA),raw_sdk=factor(NA)),
+    
     DLL = "hier_yk_LSD_OBSLL",silent=T)
   
   
@@ -168,7 +169,7 @@ for(k in 1:niter){
           obs.opt <- nlminb(start=obj_LL$par,objective=obj_LL$fn,gradient=obj_LL$gr,silent=F)
           
           obs.rep <- sdreport(obj_LL)
-          obs.srep <- summary(obs.rep)
+          obs.srep <- summary(obs.srep)
           
           dyn.unload(dynlib(paste0(dllroot,"hier_yk_LSD")))
           dyn.unload(dynlib(paste0(dllroot,"hier_yk_LSD_OBSLL")))
@@ -190,7 +191,7 @@ for(k in 1:niter){
             k.reparam=k.reparam.mean.em,l=l.mean.em,L=L.em,sd.l = sd.l.em,sd.k = sd.k.reparam.em,Rho=rho.em,lk.RE=lk.reparam.mat.em, 
             l.par.vec = l.par.vec.em,sigma=sigma.em,K.overall=K_overall,Linf.overall =linf_overall,tzero.overall=tzero_overall,
             K.yearly = K_yearly,Linf.cohort=linf_cohort,tzero.cohort = tzero_cohort, Lambda.params=no.lambda.param,
-            sample.size=samplesize,Entropy = EN,age1=age1,Final.Estimate.Error = obs.srep))
+            sample.size=samplesize,Entropy = EN,age1=age1,Final.Estimate.Error = obs.srep,Entropy=EN))
             #stop("converged")
         }
     }   
@@ -210,7 +211,6 @@ for(k in 1:niter){
         } 
         
         EN<- -sum(tau.mat*log(ifelse(tau.mat==0,1.1e-323,tau.mat)))
-
 
 obj <- MakeADFun(
   data = list(Lengths=Lengths_matrix,
@@ -232,6 +232,8 @@ obj <- MakeADFun(
   
   random=c("lk"),
   
+  map = list(raw_sdl = factor(NA),raw_sdk=factor(NA)),
+  
   DLL = "hier_yk_LSD",silent=T)
   
 #UB<-c(Inf,Inf,log(0.05),rep(Inf,5))
@@ -245,19 +247,19 @@ par1<-rep$par.fixed
 l.mean.em<-exp(par1[1])
 L.em<-exp(par1[2])
 
-raw.sd.l.em<-par1[3]         
-raw.sd.k.reparam.em<-par1[4]
-sd.l.em<-exp(par1[3])         
-sd.k.reparam.em<-exp(par1[4])
+#raw.sd.l.em<-par1[3]         
+#raw.sd.k.reparam.em<-par1[4]
+sd.l.em<-exp(raw.sd.l.em)         
+sd.k.reparam.em<-exp(raw.sd.k.reparam.em)
 
-raw.rho.em<-par1[5]
-rho.em<- -1 + 2 * plogis(par1[5])
+raw.rho.em<-par1[3]
+rho.em<- -1 + 2 * plogis(par1[3])
 
-raw.k.reparam.mean.em <- par1[6]
-k.reparam.mean.em <- plogis(par1[6])
+raw.k.reparam.mean.em <- par1[4]
+k.reparam.mean.em <- plogis(par1[4])
 
-s.em<-exp(par1[7])              
-S.em<-exp(par1[8])              
+s.em<-exp(par1[5])              
+S.em<-exp(par1[6])              
 
 
 lk.reparam.mat.em<- matrix(srep[rownames(srep) == "lk", "Estimate"], ncol = 2)
@@ -333,6 +335,7 @@ if(k==niter){
   
   dyn.unload(dynlib(paste0(dllroot,"hier_yk_LSD")))
   dyn.unload(dynlib(paste0(dllroot,"hier_yk_LSD_OBSLL")))
+  
   print("Reached max iterations and not converged")
   print(paste("Result is after ",niter," M steps..."))   
   

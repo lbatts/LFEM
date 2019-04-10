@@ -1,4 +1,4 @@
-hier_constantSD_k<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.comp, Lengths,niter,rel.tolerance)
+hier_constantSD_k_FRESD<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.comp, Lengths,niter,rel.tolerance,sdl,sdk)
   
       {
 
@@ -8,8 +8,8 @@ hier_constantSD_k<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,N
               stop("Only one sigma.start value needed")
               }
         
-        EN<-NA
         
+        EN<-NA
    Lengths_matrix<-data.matrix(Lengths)####need this matrix for TMB model...converts survey characters to numbers in alphbetical order     
    Lengths_matrix[,2]<-Lengths_matrix[,2] - (min(year0))    ###sets up "years" column for use within TMB model..i.e. first year == 0 
    Lengths_matrix[,1]<-Lengths_matrix[,1] - 1               ####sets up "surveys" coumn for use within TMB model...i.e. first survey==0
@@ -40,8 +40,8 @@ l.par.vec.plus  <- rep(l,max.years.backforfill)
  k.par.vec.plus <- rep(k.reparam,max.years.backforfill)#temporary for ease of filling starting array, is cut down for algorithm
    
 
- #compile("hier_model_version_constantSD_pluscohortk.cpp")
- #compile("hier_model_version_constantSD_pluscohortk_OBSLL.cpp")
+ #compile("hier_model_version_constantSD_pluscohortk_adj.cpp")
+ #compile("hier_model_version_constantSD_pluscohortk_OBSLL_adj.cpp")
 
  dyn.load(dynlib(paste0(dllroot,"hier_ck_CSD")))
  dyn.load(dynlib(paste0(dllroot,"hier_ck_CSD_OBSLL")))
@@ -97,8 +97,9 @@ sigma.em<-sigma.start
 lk.reparam.mat.em<-matrix(NA,ncol=2,nrow=max.years)
 lk.reparam.mat.em[,1]<-0
 lk.reparam.mat.em[,2]<-0
-raw.sd.l.em<- -5            
-raw.sd.k.reparam.em<- -5
+raw.sd.l.em<- sdl        # standard deviation of l random effect is fixed very low so as to restrict the components in years where there isnt a signal
+
+raw.sd.k.reparam.em<- sdk # set very low so as to start estimation off with no bias
 raw.rho.em<- 0
 
 
@@ -146,7 +147,7 @@ for(k in 1:niter){
       logit_k_reparam_mu = qlogis(k.reparam.mean.em),
       log_comp_sigma=log(sigma.em)), 
     
-    #map = list(raw_sdl = factor(NA)), 
+    map = list(raw_sdl = factor(NA),raw_sdk=factor(NA)), 
     
     random=c("lk"),
     
@@ -162,8 +163,6 @@ for(k in 1:niter){
         
     if(k > 2 ){
         if(abs(obs.llike[k] - obs.llike[k-1]) <  abs(obs.llike[k-1] * rel.tolerance)){
-          
-          #maximise obs LL
           
           obs.opt <- nlminb(start=obj_LL$par,objective=obj_LL$fn,gradient=obj_LL$gr,silent=F)
           
@@ -206,9 +205,8 @@ for(k in 1:niter){
           }
         } 
         
-
         EN<- -sum(tau.mat*log(ifelse(tau.mat==0,1.1e-323,tau.mat)))
-        
+
 obj <- MakeADFun(
   data = list(Lengths=Lengths_matrix,
   tau=tau.mat,
@@ -226,7 +224,7 @@ obj <- MakeADFun(
   logit_k_reparam_mu = qlogis(k.reparam.mean.em),
   log_comp_sigma=log(sigma.em)), 
   
-  #map = list(raw_sdl = factor(NA)),
+  map = list(raw_sdl = factor(NA),raw_sdk=factor(NA)),
   
   random=c("lk"),
   
@@ -243,18 +241,18 @@ par1<-rep$par.fixed
 l.mean.em<-exp(par1[1])
 L.em<-exp(par1[2])
 
-raw.sd.l.em<-par1[3]         
-raw.sd.k.reparam.em<-par1[4]
-sd.l.em<-exp(par1[3])         
-sd.k.reparam.em<-exp(par1[4])
+#raw.sd.l.em<-par1[3]         
+#raw.sd.k.reparam.em<-par1[3]
+sd.l.em<-exp(raw.sd.l.em)         
+sd.k.reparam.em<-exp(raw.sd.k.reparam.em)
 
-raw.rho.em<-par1[5]
-rho.em<- -1 + 2 * plogis(par1[5])
+raw.rho.em<-par1[3]
+rho.em<- -1 + 2 * plogis(par1[3])
 
-raw.k.reparam.mean.em <- par1[6]
-k.reparam.mean.em <- plogis(par1[6])
+raw.k.reparam.mean.em <- par1[4]
+k.reparam.mean.em <- plogis(par1[4])
 
-sigma.em<-exp(par1[7])              
+sigma.em<-exp(par1[5])              
 
 lk.reparam.mat.em<- matrix(srep[rownames(srep) == "lk", "Estimate"], ncol = 2)
 

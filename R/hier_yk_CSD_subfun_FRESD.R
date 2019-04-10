@@ -1,21 +1,21 @@
-hier_linearSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.comp, Lengths,niter,rel.tolerance)
+hier_constantSD_yk_FRESD<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.comp, Lengths,niter,rel.tolerance,sdl,sdk)
   
       {
 
 #####set up Mu's. If no variation between years than only need one set one Mus
   no.surveys<-length(no.years)      
-  if(length(sigma.start)<2){
-    stop("Two sigma.start values needed")
+  if(length(sigma.start)>1){
+    stop("Only one sigma.start value needed")
   }
   
-  EN <- NA
+  EN<-NA
   
   Lengths_matrix<-data.matrix(Lengths)####need this matrix for TMB model...converts survey characters to numbers in alphbetical order     
   Lengths_matrix[,2]<-Lengths_matrix[,2] - (min(year0))    ###sets up "years" column for use within TMB model..i.e. first year == 0 
   Lengths_matrix[,1]<-Lengths_matrix[,1] - 1               ####sets up "surveys" coumn for use within TMB model...i.e. first survey==0
   Lengths_matrix<-Lengths_matrix[order(Lengths_matrix[,1],Lengths_matrix[,2]),] #####order numeric matrix by first column (Survey) the secound column (Year). This means individual obs are the same order as Lengths (which follows)
   Lengths_matrix[is.na(Lengths_matrix)]<-0   ##This just means that if there is only one survey or one year there isn't NAs in matrix
-  Lengths<-dlply(Lengths, .(Survey,Year))   ####set up data for function   ####NOTE...surveys set up in alphabetical order
+  #Lengths<-dlply(Lengths, .(Survey,Year))   ####set up data for function   ####NOTE...surveys set up in alphabetical order
   
   no.lambda.param <- sum(no.years*(No.comp-1))
   samplesize <- sum(Lengths_matrix[,4])
@@ -26,7 +26,6 @@ hier_linearSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No
   
   
   mu.arr.bff<-array(NA,dim=c(max.years.comp,No.comp,no.surveys))
-
   #k.reparam can be used here as set up beacuse all years have same k.rep
   #within loop the average k.rep over the years the cohort is present is used in these back calcs
   linf.em<-(L-(l*k.reparam^(No.comp-1)))/(1-(k.reparam^(No.comp-1)))
@@ -36,15 +35,16 @@ hier_linearSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No
   l.var<-linf.em*(1-exp(-K.em*(age1-tzero.em)))
   L.var<- linf.em*(1-exp(-K.em*((age1+(No.comp-1))-tzero.em)))
   
+  
   l.par.vec.plus  <- rep(l,max.years.backforfill)
   k.par.vec.plus <- rep(k.reparam,max.years.comp)#temporary for ease of filling starting array, is cut down for algorithm
   
 
- #compile("hier_yk_LSD.cpp")
- #compile("hier_model_version_linearSD_plusyearlyk_OBSLL__adj.cpp")
+ #compile("hier_model_version_constantSD_plusyearlyk_adj.cpp")
+ #compile("hier_model_version_constantSD_plusyearlyk_OBSLL__adj.cpp")
  
- dyn.load(dynlib(paste0(dllroot,"hier_yk_LSD")))
- dyn.load(dynlib(paste0(dllroot,"hier_yk_LSD_OBSLL")))
+  dyn.load(dynlib(paste0(dllroot,"hier_yk_CSD")))
+  dyn.load(dynlib(paste0(dllroot,"hier_yk_CSD_OBSLL")))
  
  for(j in 1:no.surveys){
    mu.arr.bff[1:max.years.backforfill,1,j]<- rep(l.var[j], max.years.backforfill)
@@ -90,22 +90,20 @@ hier_linearSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No
  #lambda.start<-as.brob(lambda.start)    ##no use as cannot convert into array
  lambda.array<-array(lambda.start,dim=c(length(levels(factor(Lengths_matrix[,2]))),No.comp,no.surveys))
  lambda.array.plus <- lambda.array
+ sigma.em<-sigma.start
+ 
  
  lk.reparam.mat.em<-matrix(NA,ncol=2,nrow=max.years)
  lk.reparam.mat.em[,1]<-0
  lk.reparam.mat.em[,2]<-0
- raw.sd.l.em<--5            
- raw.sd.k.reparam.em<--5
+ raw.sd.l.em<- sdl           
+ raw.sd.k.reparam.em<- sdk
  raw.rho.em<-0
  
- sigma.em<-sigma.start
- s.em<-sigma.em[1]
- S.em<-sigma.em[2]
- sd.em<-NA
  
  
- sd.bff <- s.em+ (S.em-s.em)*((mu.arr.bff - l.mean.em)/(L.em - l.mean.em)) #dimensions of observed mu array
- sd.em <- array(data=sd.bff[No.comp:max.years.backforfill,,], dim=c(max.years,No.comp,no.surveys))
+ sd.em<-rep(sigma.em,No.comp)
+ 
  
  
  obs.llike <- rep(NA, niter)
@@ -113,6 +111,7 @@ hier_linearSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No
  tau.mat<-matrix(NA,ncol=No.comp,nrow=dim(Lengths_matrix)[1])
  surveyyear<-Lengths_matrix[,1:2]      ##sets up matrix for extracting parameter values specific for survey and year in TMB model
  cohort.k.rep.means<-NA #vector for storage of cohort k.rep means
+ 
           
 for(k in 1:niter){ 
   
@@ -122,7 +121,7 @@ for(k in 1:niter){
   
   for(i in 1:dim(Lengths_matrix)[1]){
     
-    worker.dens[i,] <- lambda.array[((Lengths_matrix[i,2])+1),,((Lengths_matrix[i,1])+1)] * dnorm(Lengths_matrix[i,3],mean=mu.em.array[((Lengths_matrix[i,2])+1),,((Lengths_matrix[i,1])+1)],sd=sd.em[((Lengths_matrix[i,2])+1),,((Lengths_matrix[i,1])+1)])
+    worker.dens[i,] <- lambda.array[((Lengths_matrix[i,2])+1),,((Lengths_matrix[i,1])+1)] * dnorm(Lengths_matrix[i,3],mean=mu.em.array[((Lengths_matrix[i,2])+1),,((Lengths_matrix[i,1])+1)],sd=sd.em)
     
   }
   
@@ -144,12 +143,13 @@ for(k in 1:niter){
       raw_sdk=(raw.sd.k.reparam.em),
       raw_rho=(raw.rho.em),
       logit_k_reparam_mu = qlogis(k.reparam.mean.em),
-      log_s=log(s.em),
-      log_S=log(S.em)), 
+      log_comp_sigma=log(sigma.em)), 
     
     random=c("lk"),
     
-    DLL = "hier_yk_LSD_OBSLL",silent=T)
+    map = list(raw_sdl = factor(NA),raw_sdk=factor(NA)),
+    
+    DLL = "hier_yk_CSD_OBSLL",silent=T)
   
   
   
@@ -170,8 +170,8 @@ for(k in 1:niter){
           obs.rep <- sdreport(obj_LL)
           obs.srep <- summary(obs.rep)
           
-          dyn.unload(dynlib(paste0(dllroot,"hier_yk_LSD")))
-          dyn.unload(dynlib(paste0(dllroot,"hier_yk_LSD_OBSLL")))
+          dyn.unload(dynlib(paste0(dllroot,"hier_yk_CSD")))
+          dyn.unload(dynlib(paste0(dllroot,"hier_yk_CSD_OBSLL")))
           
           linf_overall<-(L.em-(l.mean.em*(k.reparam.mean.em^(No.comp-1))))/(1-(k.reparam.mean.em^(No.comp -1))) 
           tzero_overall<- age1[1] - ((1/log(k.reparam.mean.em))*log((L.em - l.mean.em)/(L.em - l.mean.em*k.reparam.mean.em^(No.comp-1))))
@@ -186,11 +186,11 @@ for(k in 1:niter){
             
             return(list(obs.llike=obs.llike,
             
-            Mu.obs.years=mu.em.array, Mu.all.years=mu.arr.bff, Sd.obs.years=sd.em,Sd.all.years=sd.bff, Lambda=ifelse(lambda.array==(1 / No.comp),0,lambda.array),
-            k.reparam=k.reparam.mean.em,l=l.mean.em,L=L.em,sd.l = sd.l.em,sd.k = sd.k.reparam.em,Rho=rho.em,lk.RE=lk.reparam.mat.em, 
+            Mu.obs.years=mu.em.array, Mu.all.years=mu.arr.bff, Sd=sd.em, Lambda=ifelse(lambda.array==(1 / No.comp),0,lambda.array),
+            k.reparam=k.reparam.mean.em,l=l.mean.em,L=L.em,sd.l = sd.l.em,sd.k = sd.k.reparam.em,lk.RE=lk.reparam.mat.em, 
             l.par.vec = l.par.vec.em,sigma=sigma.em,K.overall=K_overall,Linf.overall =linf_overall,tzero.overall=tzero_overall,
             K.yearly = K_yearly,Linf.cohort=linf_cohort,tzero.cohort = tzero_cohort, Lambda.params=no.lambda.param,
-            sample.size=samplesize,Entropy = EN,age1=age1,Final.Estimate.Error = obs.srep))
+            sample.size=samplesize,Entropy = EN,age1=age1,Final.Estimate.Error = obs.srep,Entropy=EN))
             #stop("converged")
         }
     }   
@@ -211,7 +211,6 @@ for(k in 1:niter){
         
         EN<- -sum(tau.mat*log(ifelse(tau.mat==0,1.1e-323,tau.mat)))
 
-
 obj <- MakeADFun(
   data = list(Lengths=Lengths_matrix,
   tau=tau.mat,
@@ -227,14 +226,15 @@ obj <- MakeADFun(
   raw_sdk=(raw.sd.k.reparam.em),
   raw_rho=(raw.rho.em),
   logit_k_reparam_mu = qlogis(k.reparam.mean.em),
-  log_s=log(s.em),
-  log_S=log(S.em)),
+  log_comp_sigma=log(sigma.em)), 
   
   random=c("lk"),
   
-  DLL = "hier_yk_LSD",silent=T)
+  map = list(raw_sdl = factor(NA),raw_sdk=factor(NA)),
   
-#UB<-c(Inf,Inf,log(0.05),rep(Inf,5))
+  DLL = "hier_yk_CSD",silent=T)
+  
+#UB<-c(Inf,Inf,log(0.05),log(0.1),rep(Inf,3))
 
   opt <- nlminb(start=obj$par,objective=obj$fn,gradient=obj$gr,silent=T)#,upper=UB)
   rep <- sdreport(obj)
@@ -245,19 +245,18 @@ par1<-rep$par.fixed
 l.mean.em<-exp(par1[1])
 L.em<-exp(par1[2])
 
-raw.sd.l.em<-par1[3]         
-raw.sd.k.reparam.em<-par1[4]
-sd.l.em<-exp(par1[3])         
-sd.k.reparam.em<-exp(par1[4])
+#raw.sd.l.em<-par1[3]         
+#raw.sd.k.reparam.em<-par1[4]
+sd.l.em<-exp(raw.sd.l.em)         
+sd.k.reparam.em<-exp(raw.sd.k.reparam.em)
 
-raw.rho.em<-par1[5]
-rho.em<- -1 + 2 * plogis(par1[5])
+raw.rho.em<-par1[3]
+rho.em<- -1 + 2 * plogis(par1[3])
 
-raw.k.reparam.mean.em <- par1[6]
-k.reparam.mean.em <- plogis(par1[6])
+raw.k.reparam.mean.em <- par1[4]
+k.reparam.mean.em <- plogis(par1[4])
 
-s.em<-exp(par1[7])              
-S.em<-exp(par1[8])              
+sigma.em<-exp(par1[5])              
 
 
 lk.reparam.mat.em<- matrix(srep[rownames(srep) == "lk", "Estimate"], ncol = 2)
@@ -278,11 +277,9 @@ l.par.vec.plus<-mu.arr.bff[1:max.years.backforfill,1,1]
 L<-mu.arr.bff[No.comp:max.years.comp,No.comp,1]
 k.par.vec.plus<-c(rep(sum(k.par.vec.em)/length(k.par.vec.em),No.comp-1),k.par.vec.em,rep((sum(k.par.vec.em)/length(k.par.vec.em)),(No.comp-1)))
 
-
-
-  for(i in 1:max.years.backforfill){
-    cohort.k.rep.means[i] <- mean(k.par.vec.plus[i:(i+(No.comp-1))])
-  }
+for(i in 1:max.years.backforfill){
+  cohort.k.rep.means[i] <- mean(k.par.vec.plus[i:(i+(No.comp-1))])
+}
 
 linf.em<-(L-(l.par.vec.plus*cohort.k.rep.means^(No.comp-1)))/(1-(cohort.k.rep.means^(No.comp-1)))#
 K.em <- -log(cohort.k.rep.means)  
@@ -319,20 +316,15 @@ for(j in 1:no.surveys){
 
 mu.em.array <- array(data=mu.arr.bff[No.comp:max.years.backforfill,,], dim=c(max.years,No.comp,no.surveys))
 
-sd.bff<-s.em+ (S.em-s.em)*((mu.arr.bff - l.mean.em)/(L.em - l.mean.em)) #dimensions of observed mu array
-sd.em <- array(data=sd.bff[No.comp:max.years.backforfill,,], dim=c(max.years,No.comp,no.surveys))
-
-sigma.em[1] <- s.em ###this just means that s.em and S.em will be in output
-sigma.em[2] <- S.em 
-
+   sd.em<-rep(sigma.em,No.comp)
                      
 lambda.array <- lambda.array.plus
  
  
 if(k==niter){
   
-  dyn.unload(dynlib(paste0(dllroot,"hier_yk_LSD")))
-  dyn.unload(dynlib(paste0(dllroot,"hier_yk_LSD_OBSLL")))
+  dyn.unload(dynlib(paste0(dllroot,"hier_yk_CSD")))
+  dyn.unload(dynlib(paste0(dllroot,"hier_yk_CSD_OBSLL")))
   print("Reached max iterations and not converged")
   print(paste("Result is after ",niter," M steps..."))   
   

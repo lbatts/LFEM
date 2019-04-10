@@ -2,6 +2,10 @@
 title: "Hierarchical run example"
 author: "LB"
 date: "08 April 2019"
+header-includes:
+- \usepackage{pdflscape}
+- \newcommand{\blandscape}{\begin{landscape}}
+- \newcommand{\elandscape}{\end{landscape}}
 output:
   pdf_document: default
   html_document: default
@@ -103,95 +107,57 @@ age1<-c(0.875,0.875,0.73)
     + 3 -> linear SD relative to means, needs two sigma.start parameters e.g. c(5,10)
     + 4 -> constant SD
     
-*
-  
+* RE.type =
+    + 1 -> cohort random effects on $l$ and $L$
+    + 2 -> cohort random effects on $l$ and $k$
+    + 3 -> cohort random effects on $l$ and yearly random effect on $k$
+    
+* fix.RESD = 
+    + TRUE -> standard deviations for the random effects are fixed to input values.  These need to be specified in the function as sdl and sdL or sdk.  This gives models more stability when data is lacking, but still provides enough flexibility (see haddock example of paper).
+    + FALSE -> Estimates sd of random effects
+ 
+  \newpage
 #Run the function
-If rel.tolerance is set at 1e-8 as is standard then this may take a while to converge
+If rel.tolerance is set at 1e-8 as is standard then this will take some time to converge
 
 ```{r,eval=F}
+#Example where sd of RE is estimated
+hier_test<- hier.LFEM(year0=year0,no.years=no.years,age1=age1,L=130,l=(16),
+k.reparam=0.83,sigma.start=c(6,10),No.comp=9,SD.type=3,RE.type=1,fix.RESD=F,Lengths=lfdat,
+niter=10000,rel.tolerance=1e-1,dllroot = dllroot)
 
-hier_test<- hier.LFEM(year0=year0,no.years=no.years, age1=age1, L=130, l=(16), k.reparam=0.83, sigma.start=c(6,10),No.comp=9,SD.type=3,RE.type=1, fix.RESD=F, Lengths=lfdat,niter=10000,rel.tolerance=1e-2,dllroot = dllroot)
+
+#Example where sd of RE is fixed by the user
+hier_test_fixedRESD<- hier.LFEM(year0=year0,no.years=no.years,age1=age1,L=130,l=(16),
+k.reparam=0.83,sigma.start=c(6,10),No.comp=9,SD.type=3,RE.type=1,fix.RESD=T,Lengths=lfdat,
+niter=10000,rel.tolerance=1e-1,dllroot = dllroot,sdl=-2,sdL=-2)
 ```
 
 Load the test object if you haven't run the model
 ```{r}
 load("../data/hier_test.RData")
 ```
-
+\newpage
 #Results
 There are many results from the model
 ```{r}
-str(test)
+str(hier_test)
 ```
 First thing to check is the convergence
 ```{r}
-plot(test$obs.llike)
+plot(hier_test$obs.llike)
 
 ```
 
 Then explore the rest of the results
 
-Mu and Lambda are arrays.  For example: below shows the nine component means estimated for the first survey
+Mu's and Sd's are now matrices rather than a vector for each survey.  If we take a look at Mu.all.years this displays all component means including those that are used in the unbserved years.  In this case the model assumes nine components(m), so we have (m-1) unobserved years before and after our survey data.  Adding these in allows us to model cohorts.  $l$ values for unbserved years are given the average, as are their corresponding $L$.  This gives the hierrarchical model more stability but also allows us to focus on the variability in the cohorts we observe from their very first year (i.e. the first year of our survey data).
 
+\newpage
 
-```{r}
-test$Mu[,,1]
+```{r,results= 'markup',comment = ""}
+hier_test$Mu.all.years[,,1]
 ```
-
-model selection criteria
-```{r}
-
-source("../R/BIC_AIC.R")
-aic(test)
-bic(test)
-icl_bic(test)
-sub_aic(test)
-
-
-```
-
-####Please see other plot_example.R for plotting this model result over the length frequency distributions
-
-#Further analysis and sensitivity
-
-Here's some inelegant code to conduct a sensitivity analysis on some of the starting parameters.  You may want to leave this running over night as it is over 1400 model runs!!
-
-```{r,eval=F}
-df<-expand.grid(k = seq(0.7,0.99,length=30), L =seq(100,130,length=4),No.comp =seq(6,14,length=9),krep.final=NA,K.final=NA,Linf.final=NA,tzero.final=NA,l.final=NA,obs.ll=NA,iclbic=NA,aic=NA,bic=NA,Entropy=NA,sub.aic=NA)
-
-mu.lst<-list(list())
-sd.lst<-list(list())
-lambda.lst<-list(list())
-
-
-for(i in 1:dim(df)[1]){
-  
-  result_TMB<-basic(year0=year0,no.years=no.years, age1=age1, L=df[i,2], l=16, k.reparam=df[i,1],sigma.start=c(10),No.comp=df[i,3],                 Lengths=lfdat,niter=10000,SD.type=4,rel.tolerance=1e-8)
-  
-  df$K.final[i]<-result_TMB$K 
-  df$l.final[i]<-result_TMB$l
-  df$L.final[i]<-result_TMB$L
-  df$krep.final[i] <-result_TMB$k.reparam 
-  df$Linf.final[i]<-result_TMB$Linf
-  df$tzero.final[i]<-result_TMB$tzero
-  df$obs.ll[i]<-max(result_TMB$obs.llike)
-  df$iclbic[i]<-icl_bic(result_TMB)
-  df$aic[i]<-aic(result_TMB)
-  df$bic[i]<-bic(result_TMB)
-  df$Entropy[i]<-result_TMB$Entropy
- df$sub.aic[i]<-sub_aic(result_TMB)
-  
-    mu.lst[[i]]<-result_TMB$Mu
-  sd.lst[[i]]<-result_TMB$Sd
-  lambda.lst[[i]]<-result_TMB$Lambda
-}
-
-
-save(ls(),file="constantSDsensruns_MON.RData")
-
-```
-
-
 
 
 
