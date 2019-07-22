@@ -5,5 +5,5 @@ In order to run the model in repository the following R package must be installe
 
 * TMB (Template Model Builder): https://github.com/kaskr/adcomp
 
-The journal article in which this methodlogy is introduced can be found here: https://doi.org/10.1093/icesjms/fsz103
+The journal article in which this methodology is introduced can be found here: https://doi.org/10.1093/icesjms/fsz103
 
