@@ -7,8 +7,8 @@ header-includes:
 - \newcommand{\blandscape}{\begin{landscape}}
 - \newcommand{\elandscape}{\end{landscape}}
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -43,7 +43,7 @@ The dataframe should be formatted as below for the function, with four columns: 
 head(lfdat)
 ```
 
-Objective functions have already been compiled so no need to do this again but here is the code to do it. Also set root directory for cpp/dll files so the function can find the .dll files.
+Objective functions need to be compiled, here is the code to do it. Set root directory for cpp/dll files so the function can find the .dll files.
 
 ```{r,warning=F , message=F}
 

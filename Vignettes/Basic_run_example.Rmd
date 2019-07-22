@@ -3,8 +3,8 @@ title: "Basic run example"
 author: "LB"
 date: "18 October 2018"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
