@@ -1,6 +1,11 @@
 # History files
-.Rhistory
-.Rapp.history
+#files from compilation
+*.o
+*.so
+*.dll
+
+*.Rhistory
+*.Rapp.history
 
 # Session Data files
 .RData
