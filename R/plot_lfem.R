@@ -3,7 +3,7 @@
 #
 #================
 
-plot.lfem<- function(model,Lengths,Survey.num,xlimit){
+plot.lfem<- function(model,Lengths,Survey.num,xlimit,td){
   
   
   names(Lengths)<-c("Survey","Year","Length","RF")
@@ -69,7 +69,7 @@ plot.lfem<- function(model,Lengths,Survey.num,xlimit){
       }else{
         par(mfcol = c(ny/2, 2))
       }
-      par(cex = 0.6)
+      par(cex = 0.6,las=1,xaxs="i")
       par(mar = c(1, 0, 0, 0), oma = c(4, 4, 0.5, 0.5))
       par(tcl = -0.25)
       par(mgp = c(2, 0.6, 0))
@@ -88,10 +88,11 @@ plot.lfem<- function(model,Lengths,Survey.num,xlimit){
         yr.dat <- subset(dat, Year == uniq.yr[i])
         l.vec <- yr.dat$Length
         l.all <- l.vec[rep(1:length(l.vec), times = yr.dat$RF)]
-        hist(l.all, breaks = brks, col = "lightgrey", border = "grey", main = "", xlim = c(0, xlimit), probability = TRUE,axes=F,ylim=c(0,maxden))#ylim = c(0, 0.02)
+        hist(l.all, breaks = brks, col = "lightgrey", border = "grey", main = "", xlim = c(0, xlimit), probability = TRUE,axes=F,ylim=c(0,maxden),las=1)#ylim = c(0, 0.02)
         matlines(l.pred, dens.mat, lty = 2,col=1, alpha=0.6)
+        if(td==TRUE){
         lines(l.pred, rowSums(dens.mat),lty=2,col = "red")
-        
+        }
        
         
         xcoords[i,] <- grconvertX(x=Mu[uniq.yr.num[i],,Survey.num], "user", "ndc")
@@ -101,7 +102,11 @@ plot.lfem<- function(model,Lengths,Survey.num,xlimit){
         mtext(uniq.yr[i], side = 3, line = -1, adj = 0.1, cex = 0.6,col = "grey40")
         
         if(i==1){
+          if(td==T){
+          
           legend("topright",legend = c("Components", "Cohort progression","Total density"),lty=c(2,1,2),col=c(1,1,2),cex=0.8)
+          }else
+            legend("topright",legend = c("Components", "Cohort progression"),lty=c(2,1),col=c(1,1),cex=0.8)
         }
         
         
@@ -132,7 +137,7 @@ plot.lfem<- function(model,Lengths,Survey.num,xlimit){
       mtext("Length of fish (cm)", side = 1, outer = TRUE, cex = 0.7, line = 2.2,
             col = "grey20")
       mtext("Proportion of total count", side = 2, outer = TRUE, cex = 0.7, line = 2.2,
-            col = "grey20")
+            col = "grey20",las=0)
       
       if(ny<8){
         
@@ -241,8 +246,8 @@ plot.lfem<- function(model,Lengths,Survey.num,xlimit){
     }else{
     par(mfcol = c(ny/2, 2))
     }
-    par(cex = 0.6)
-    par(mar = c(1, 0, 0, 0), oma = c(4, 4, 0.5, 0.5))
+    par(cex = 0.6,las=1,xaxs="i")
+    par(mar = c(0, 1, 0, 0), oma = c(4, 4, 0.5, 0.5))
     par(tcl = -0.25)
     par(mgp = c(2, 0.6, 0))
     
@@ -260,10 +265,11 @@ plot.lfem<- function(model,Lengths,Survey.num,xlimit){
       yr.dat <- subset(dat, Year == uniq.yr[i])
       l.vec <- yr.dat$Length
       l.all <- l.vec[rep(1:length(l.vec), times = yr.dat$RF)]
-      hist(l.all, breaks = brks, col = "lightgrey", border = "grey", main = "", xlim = c(0, xlimit), probability = TRUE,axes=F,ylim=c(0,maxden))#ylim = c(0, 0.02)
+      hist(l.all, breaks = brks, col = "lightgrey", border = "grey", main = "", xlim = c(0, xlimit), probability = TRUE,axes=F,ylim=c(0,maxden),las=1)#ylim = c(0, 0.02)
       matlines(l.pred, dens.mat, lty = 2,col=1, alpha=0.6)
-      lines(l.pred, rowSums(dens.mat),lty=2,col = "red")
-      
+      if(td==TRUE){
+        lines(l.pred, rowSums(dens.mat),lty=2,col = "red")
+      }
       
       
       xcoords[i,] <- grconvertX(x=Mu[,,Survey.num], "user", "ndc")
@@ -273,7 +279,11 @@ plot.lfem<- function(model,Lengths,Survey.num,xlimit){
       mtext(uniq.yr[i], side = 3, line = -1, adj = 0.1, cex = 0.6,col = "grey40")
       
       if(i==1){
-        legend("topright",legend = c("Components", "Cohort progression","Total density"),lty=c(2,1,2),col=c(1,1,2),cex=0.8)
+        if(td==T){
+          
+          legend("topright",legend = c("Components", "Cohort progression","Total density"),lty=c(2,1,2),col=c(1,1,2),cex=0.8)
+        }else
+          legend("topright",legend = c("Components", "Cohort progression"),lty=c(2,1),col=c(1,1),cex=0.8)
       }
       
       
@@ -304,7 +314,7 @@ plot.lfem<- function(model,Lengths,Survey.num,xlimit){
     mtext("Length of fish (cm)", side = 1, outer = TRUE, cex = 0.7, line = 2.2,
           col = "grey20")
     mtext("Proportion of total count", side = 2, outer = TRUE, cex = 0.7, line = 2.2,
-          col = "grey20")
+          col = "grey20",las=0)
   
   if(ny<8){
     
