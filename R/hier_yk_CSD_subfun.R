@@ -43,8 +43,8 @@ hier_constantSD_yk<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,
  #compile("hier_model_version_constantSD_plusyearlyk_adj.cpp")
  #compile("hier_model_version_constantSD_plusyearlyk_OBSLL__adj.cpp")
  
- dyn.load(dynlib(paste0(dllroot,"hier_yk_CSD")))
- dyn.load(dynlib(paste0(dllroot,"hier_yk_CSD_OBSLL")))
+ dyn.load(dynlib(paste(dllroot,"tmb/hier_yk_CSD")))
+ dyn.load(dynlib(paste(dllroot,"tmb/hier_yk_CSD_OBSLL")))
  
  for(j in 1:no.surveys){
    mu.arr.bff[1:max.years.backforfill,1,j]<- rep(l.var[j], max.years.backforfill)
@@ -168,8 +168,8 @@ for(k in 1:niter){
           obs.rep <- sdreport(obj_LL)
           obs.srep <- summary(obs.rep)
           
-          dyn.unload(dynlib(paste0(dllroot,"hier_yk_CSD")))
-          dyn.unload(dynlib(paste0(dllroot,"hier_yk_CSD_OBSLL")))
+          dyn.unload(dynlib(paste(dllroot,"tmb/hier_yk_CSD")))
+          dyn.unload(dynlib(paste(dllroot,"tmb/hier_yk_CSD_OBSLL")))
           
           linf_overall<-(L.em-(l.mean.em*(k.reparam.mean.em^(No.comp-1))))/(1-(k.reparam.mean.em^(No.comp -1))) 
           tzero_overall<- age1[1] - ((1/log(k.reparam.mean.em))*log((L.em - l.mean.em)/(L.em - l.mean.em*k.reparam.mean.em^(No.comp-1))))
@@ -319,8 +319,8 @@ lambda.array <- lambda.array.plus
  
 if(k==niter){
   
-  dyn.unload(dynlib(paste0(dllroot,"hier_yk_CSD")))
-  dyn.unload(dynlib(paste0(dllroot,"hier_yk_CSD_OBSLL")))
+  dyn.unload(dynlib(paste(dllroot,"tmb/hier_yk_CSD")))
+  dyn.unload(dynlib(paste(dllroot,"tmb/hier_yk_CSD_OBSLL")))
   
   print("Reached max iterations and not converged")
   print(paste("Result is after ",niter," M steps..."))   

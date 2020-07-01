@@ -42,8 +42,8 @@ hier_linearSD_L<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.
   
   #compile("hier_cL_LSD.cpp")
   #compile("hier_cL_LSD_OBSLL.cpp")
-  dyn.load(dynlib(paste0(dllroot,"hier_cL_LSD")))
-  dyn.load(dynlib(paste0(dllroot,"hier_cL_LSD_OBSLL")))
+  dyn.load(dynlib(paste(dllroot,"tmb/hier_cL_LSD",sep="")))
+  dyn.load(dynlib(paste(dllroot,"tmb/hier_cL_LSD_OBSLL",sep="")))
   
   for(j in 1:no.surveys){
     mu.arr.bff[1:max.years.backforfill,1,j]<- rep(l.var[j], max.years.backforfill)
@@ -173,6 +173,10 @@ hier_linearSD_L<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.
         K<- -log(k.reparam.em)
         
         obs.llike <- obs.llike[!is.na(obs.llike)]
+        
+        dyn.unload(dynlib(paste(dllroot,"tmb/hier_cL_LSD",sep="")))
+        dyn.unload(dynlib(paste(dllroot,"tmb/hier_cL_LSD_OBSLL",sep="")))
+        
         return(list(obs.llike=obs.llike,Mu.obs.years=mu.em.array,Mu.all.years=mu.arr.bff,Sd.obs.years=sd.em,Sd.all.years=sd.bff,Lambda=ifelse(lambda.array==(1 / No.comp),0,lambda.array),
                     k.reparam=k.reparam.em,l=l.mean.em,L=L.mean.em,sd.l = sd.l.em,sd.L = sd.L.em, Rho= rho.em,RE.mat=lL.mat.em, 
                     l.par.vec = l.par.vec.em, L.par.vec = L.par.vec.em,sigma=sigma.em,K=K,Linf.overall =linf_overall,tzero.overall=tzero_overall, 
@@ -301,6 +305,14 @@ hier_linearSD_L<-function(year0,no.years, age1, L, l, k.reparam, sigma.start,No.
     
     lambda.array <- lambda.array.plus
     
+    if(k==niter){
+      
+      dyn.unload(dynlib(paste(dllroot,"tmb/hier_cL_LSD",sep="")))
+      dyn.unload(dynlib(paste(dllroot,"tmb/hier_cL_LSD_OBSLL",sep="")))
+      
+      print("Reached max iterations and not converged")
+      print(paste("Result is after ",niter," M steps..."))   
+    }
     
   }
 }

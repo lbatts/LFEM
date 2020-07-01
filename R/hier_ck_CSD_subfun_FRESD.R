@@ -43,8 +43,8 @@ l.par.vec.plus  <- rep(l,max.years.backforfill)
  #compile("hier_model_version_constantSD_pluscohortk_adj.cpp")
  #compile("hier_model_version_constantSD_pluscohortk_OBSLL_adj.cpp")
 
- dyn.load(dynlib(paste0(dllroot,"hier_ck_CSD")))
- dyn.load(dynlib(paste0(dllroot,"hier_ck_CSD_OBSLL")))
+ dyn.load(dynlib(paste(dllroot,"tmb/hier_ck_CSD",sep="")))
+ dyn.load(dynlib(paste(dllroot,"tmb/hier_ck_CSD_OBSLL",sep="")))
 
  for(j in 1:no.surveys){
    mu.arr.bff[1:max.years.backforfill,1,j]<- rep(l.var[j], max.years.backforfill)
@@ -178,6 +178,9 @@ for(k in 1:niter){
           K_cohort<- -log(k.par.vec.plus)
             
             obs.llike <- obs.llike[!is.na(obs.llike)]
+            
+            dyn.unload(dynlib(paste(dllroot,"tmb/hier_ck_CSD",sep="")))
+            dyn.unload(dynlib(paste(dllroot,"tmb/hier_ck_CSD_OBSLL",sep="")))
             
             return(list(obs.llike=obs.llike,
             
@@ -317,6 +320,15 @@ mu.em.array <- array(data=mu.arr.bff[No.comp:max.years.backforfill,,], dim=c(max
                      
 lambda.array <- lambda.array.plus
  
+
+if(k==niter){
+  
+  dyn.unload(dynlib(paste(dllroot,"tmb/hier_ck_CSD",sep="")))
+  dyn.unload(dynlib(paste(dllroot,"tmb/hier_ck_CSD_OBSLL",sep="")))
+  
+  print("Reached max iterations and not converged")
+  print(paste("Result is after ",niter," M steps..."))   
+}
  
 }#end of loop
   }#end of FUN

@@ -42,8 +42,8 @@ hier_linearSD_k_FRESD<-function(year0,no.years, age1, L, l, k.reparam, sigma.sta
   #compile("hier_model_version_linearSD_pluscohortk_adj.cpp")
   #compile("hier_model_version_linearSD_pluscohortk_OBSLL_adj.cpp")
   
-  dyn.load(dynlib(paste0(dllroot,"hier_ck_LSD")))
-  dyn.load(dynlib(paste0(dllroot,"hier_ck_LSD_OBSLL")))
+  dyn.load(dynlib(paste(dllroot,"tmb/hier_ck_LSD",sep="")))
+  dyn.load(dynlib(paste(dllroot,"tmb/hier_ck_LSD_OBSLL",sep="")))
   
   for(j in 1:no.surveys){
     mu.arr.bff[1:max.years.backforfill,1,j]<- rep(l.var[j], max.years.backforfill)
@@ -187,6 +187,9 @@ hier_linearSD_k_FRESD<-function(year0,no.years, age1, L, l, k.reparam, sigma.sta
         
         obs.llike <- obs.llike[!is.na(obs.llike)]
         
+        dyn.unload(dynlib(paste(dllroot,"tmb/hier_ck_LSD",sep="")))
+        dyn.unload(dynlib(paste(dllroot,"tmb/hier_ck_LSD_OBSLL",sep="")))
+        
         return(list(obs.llike=obs.llike,
                     
                     Mu.obs.years=mu.em.array, Mu.all.years=mu.arr.bff, Sd.obs.years=sd.em,Sd.all.years=sd.bff, Lambda=ifelse(lambda.array==(1 / No.comp),0,lambda.array),
@@ -329,6 +332,14 @@ hier_linearSD_k_FRESD<-function(year0,no.years, age1, L, l, k.reparam, sigma.sta
     
     lambda.array <- lambda.array.plus
     
+    if(k==niter){
+      
+      dyn.unload(dynlib(paste(dllroot,"tmb/hier_ck_LSD",sep="")))
+      dyn.unload(dynlib(paste(dllroot,"tmb/hier_ck_LSD_OBSLL",sep="")))
+      
+      print("Reached max iterations and not converged")
+      print(paste("Result is after ",niter," M steps..."))   
+    }
     
   }#end of loop
 }#end of FUN

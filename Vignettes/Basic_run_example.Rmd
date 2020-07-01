@@ -3,8 +3,8 @@ title: "Basic run example"
 author: "LB"
 date: "18 October 2018"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -18,9 +18,10 @@ This method allows multiple surveys from different times of year.
 
 #Loading data and formatting
 
-WD should be "LFEM/Vignettes" folder in order to locate .cpp files later
-```{r}
-getwd()
+Objective functions need to be compiled. Set root directory for "LFEM" folder so the function can find the .dll files and other files aswell.
+
+```{r,warning=F , message=F}
+dllroot<-"C:/Users/LukeB/Documents/LFEM/"
 
 ```
 ```{r, warning=F , message=F}
@@ -31,7 +32,7 @@ library(plyr)
 library(reshape)
 library(ggplot2)
 library(data.table) 
-load("../data/lfdat_MON.RData")
+load(paste(dllroot,"data/lfdat_MON.RData",sep=""))
 ```
 The dataframe should be formatted as below for the function, with four columns: Survey, Year, Length and RF (raising factor).  The data has been aggregated by year, survey and length so as to compact the dataframe for speed. Observed log-likelihood is the same if individual fish lengths for each haul were used.
 
@@ -39,25 +40,19 @@ The dataframe should be formatted as below for the function, with four columns: 
 head(lfdat)
 ```
 
-Objective functions need to be compiled. Set root directory for cpp/dll files so the function can find the .dll files.
-
-```{r,warning=F , message=F}
-
-dllroot<-paste0(dirname(getwd()),'/tmb/')
-```
 
 ```{r, eval=F}
-compile(paste0(dllroot,"constantSD.cpp"))
-compile(paste0(dllroot,"linearSD.cpp"))
-compile(paste0(dllroot,"constantSD_OBSLL.cpp"))
-compile(paste0(dllroot,"linearSD_OBSLL.cpp"))
+compile(paste(dllroot,"tmb/constantSD.cpp",sep=""))
+compile(paste(dllroot,"tmb/linearSD.cpp",sep=""))
+compile(paste(dllroot,"tmb/constantSD_OBSLL.cpp",sep=""))
+compile(paste(dllroot,"tmb/linearSD_OBSLL.cpp",sep=""))
   
 ```
 
 Source the function
 ```{r}
 
-source("../R/basic_fun.R")
+source(paste(dllroot,"R/basic_fun.R",sep=""))
 
 ```
   
@@ -106,7 +101,7 @@ SD.type=3,rel.tolerance=1e-8,dllroot=dllroot,sub.Obs.lim = 100)
 
 Load the test object if you haven't run the model
 ```{r}
-load("../data/test.RData")
+load(paste(dllroot,"data/test.RData",sep=""))
 ```
 
 #Results
@@ -132,7 +127,7 @@ test$Mu[,,1]
 model selection criteria
 ```{r}
 
-source("../R/BIC_AIC.R")
+source(paste(dllroot,"R/BIC_AIC.R",sep=""))
 aic(test)
 bic(test)
 icl_bic(test)
@@ -182,7 +177,7 @@ sigma.start=c(10),No.comp=df[i,3],Lengths=lfdat,niter=10000,SD.type=4,rel.tolera
 }
 
 
-save(ls(),file="constantSDsensruns_MON.RData")
+#ave(ls(),file="constantSDsensruns_MON.RData")
 
 ```
 

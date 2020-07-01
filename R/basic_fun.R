@@ -73,7 +73,7 @@
        }      
        
        ##schnute fournier SD formula
-       dyn.load(dynlib(paste0(dllroot,"linearSD")))
+       dyn.load(dynlib(paste(dllroot,"tmb/linearSD",sep="")))
        s.em<-sigma.em[1]
        S.em<-sigma.em[2]
        sd.em<-NA
@@ -84,7 +84,7 @@
        }      
        
      }else if(SD.type==4){
-       dyn.load(dynlib(paste0(dllroot,"constantSD")))
+       dyn.load(dynlib(paste(dllroot,"tmb/constantSD",sep="")))
        
        
        linf.em<-(L.em-(l.em*k.reparam.em^(No.comp-1)))/(1-(k.reparam.em^(No.comp-1)))
@@ -163,7 +163,7 @@
            
            if(SD.type==4) {
              
-             dyn.load(dynlib(paste0(dllroot,"constantSD_OBSLL")))
+             dyn.load(dynlib(paste(dllroot,"tmb/constantSD_OBSLL",sep="")))
              loglik_nonvar_OBSLL <- MakeADFun(
                data = list(Lengths=Lengths_matrix,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age1), 
                parameters = list(log_l=log(l.em),log_L=log(L.em),logit_k_reparam=qlogis(k.reparam.em),log_sigma=log(sigma.em)),  
@@ -178,7 +178,7 @@
              
            }else if(SD.type==3) {
              
-             dyn.load(dynlib(paste0(dllroot,"linearSD_OBSLL")))
+             dyn.load(dynlib(paste(dllroot,"tmb/linearSD_OBSLL",sep="")))
              loglik_var_OBSLL <- MakeADFun(
                data = list(Lengths=Lengths_matrix,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age1), 
                parameters = list(log_l=log(l.em),log_L=log(L.em),logit_k_reparam=qlogis(k.reparam.em),log_s=log(s.em),log_S=log(S.em)),  
