@@ -7,8 +7,8 @@ header-includes:
 - \newcommand{\blandscape}{\begin{landscape}}
 - \newcommand{\elandscape}{\end{landscape}}
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -21,58 +21,54 @@ This method allows multiple surveys from different times of year.
 
 
 #Loading data and formatting
+Objective functions need to be compiled. Set root directory for "LFEM" folder so the function can find the .dll files and other files aswell.
 
-WD should be "LFEM/Vignettes" folder in order to locate .cpp files later
-```{r}
-getwd()
+```{r,warning=F , message=F}
+dllroot<-"C:/Users/LukeB/Documents/LFEM/"
 
 ```
 ```{r, warning=F , message=F}
 
-#install.packages(c("Matrix","data.table","plyr","reshape","TMB","ggplot2"))
+#install.packages(c("Matrix","data.table","plyr","reshape","ggplot2"))
+#install.packages("TMB",type="source")
+
 library(TMB) 
 library(plyr)
 library(reshape)
 library(ggplot2)
 library(data.table) 
-load("../data/lfdat_MON.RData")
+load(paste(dllroot,"data/lfdat_MON.RData",sep=""))
 ```
 The dataframe should be formatted as below for the function, with four columns: Survey, Year, Length and RF (raising factor).  The data has been aggregated by year, survey and length so as to compact the dataframe for speed. Observed log-likelihood is the same if individual fish lengths for each haul were used.
 
 ```{r,echo=F}
 head(lfdat)
 ```
+Compile objective files that are needed.
 
-Objective functions need to be compiled, here is the code to do it. Set root directory for cpp/dll files so the function can find the .dll files.
-
-```{r,warning=F , message=F}
-
-dllroot<-paste0(dirname(getwd()),'/tmb/')
-```
 
 ```{r,eval=F}
-compile(paste0(dllroot,"hier_cL_CSD.cpp"))
-compile(paste0(dllroot,"hier_cL_LSD.cpp"))
-compile(paste0(dllroot,"hier_cL_CSD_OBSLL.cpp"))
-compile(paste0(dllroot,"hier_cL_LSD_OBSLL.cpp"))
+compile(paste(dllroot,"tmb/hier_cL_CSD.cpp",sep=""))
+compile(paste(dllroot,"tmb/hier_cL_LSD.cpp",sep=""))
+compile(paste(dllroot,"tmb/hier_cL_CSD_OBSLL.cpp",sep=""))
+compile(paste(dllroot,"tmb/hier_cL_LSD_OBSLL.cpp",sep=""))
 
-compile(paste0(dllroot,"hier_ck_CSD.cpp"))
-compile(paste0(dllroot,"hier_ck_LSD.cpp"))
-compile(paste0(dllroot,"hier_ck_CSD_OBSLL.cpp"))
-compile(paste0(dllroot,"hier_ck_LSD_OBSLL.cpp"))
+compile(paste(dllroot,"tmb/hier_ck_CSD.cpp",sep=""))
+compile(paste(dllroot,"tmb/hier_ck_LSD.cpp",sep=""))
+compile(paste(dllroot,"tmb/hier_ck_CSD_OBSLL.cpp",sep=""))
+compile(paste(dllroot,"tmb/hier_ck_LSD_OBSLL.cpp",sep=""))
 
-compile(paste0(dllroot,"hier_yk_CSD.cpp"))
-compile(paste0(dllroot,"hier_yk_LSD.cpp"))
-compile(paste0(dllroot,"hier_yk_CSD_OBSLL.cpp"))
-compile(paste0(dllroot,"hier_yk_LSD_OBSLL.cpp"))
+compile(paste(dllroot,"hier_yk_CSD.cpp"))
+compile(paste(dllroot,"hier_yk_LSD.cpp"))
+compile(paste(dllroot,"hier_yk_CSD_OBSLL.cpp"))
+compile(paste(dllroot,"hier_yk_LSD_OBSLL.cpp"))
 ``` 
 
 
 Source the function
 ```{r}
 
-source("../R/hier_fun.R")
-
+source(paste(dllroot,"R/hier_fun.R",sep=""))
 ```
   
 #Function arguments and starting parameters
@@ -124,18 +120,18 @@ If rel.tolerance is set at 1e-8 as is standard then this will take some time to 
 #Example where sd of RE is estimated
 hier_test<- hier.LFEM(year0=year0,no.years=no.years,age1=age1,L=130,l=(16),
 k.reparam=0.83,sigma.start=c(6,10),No.comp=9,SD.type=3,RE.type=1,fix.RESD=F,Lengths=lfdat,
-niter=10000,rel.tolerance=1e-1,dllroot = dllroot)
+niter=10000,rel.tolerance=1e-8,dllroot = dllroot)
 
 
 #Example where sd of RE is fixed by the user
 hier_test_fixedRESD<- hier.LFEM(year0=year0,no.years=no.years,age1=age1,L=130,l=(16),
 k.reparam=0.83,sigma.start=c(6,10),No.comp=9,SD.type=3,RE.type=1,fix.RESD=T,Lengths=lfdat,
-niter=10000,rel.tolerance=1e-1,dllroot = dllroot,sdl=-2,sdL=-2)
+niter=10000,rel.tolerance=1e-8,dllroot = dllroot,sdl=-2,sdL=-2)
 ```
 
 Load the test object if you haven't run the model
 ```{r}
-load("../data/hier_test.RData")
+load(paste(dllroot,"data/hier_test.RData",sep=""))
 ```
 \newpage
 #Results
@@ -161,10 +157,10 @@ hier_test$Mu.all.years[,,1]
 
 We can plot the results with same function as we did the basic example.   
 ```{r}
-source("../R/plot_lfem.R")
+source(paste(dllroot,"R/plot_lfem.R",sep=""))
 library(grid)
 library(gridBase)
-plot.lfem(model=hier_test,Lengths=lfdat,Survey.num=2,xlimit=140)
+plot.lfem(model=hier_test,Lengths=lfdat,Survey.num=2,xlimit=140,td=T)
 ```
 
 
