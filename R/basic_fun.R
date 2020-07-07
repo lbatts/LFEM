@@ -52,14 +52,16 @@
      
      Components<-(1:No.comp)        ##sets up component vector for TMB model
      surveyyear<-Lengths_matrix[,1:2]      ##sets up matrix for extracting parameter values specific for survey and year in TMB model
-     
+      minage1<-min(age1)
+     # cage1<-floor(age1)
+     # nage1<-age1-cage1
      #####load the specific TMB file and set up sigma.em
      if(SD.type==3){
        
        
        linf.em<-(L.em-(l.em*k.reparam.em^(No.comp-1)))/(1-(k.reparam.em^(No.comp-1)))
        K.em <- -log(k.reparam.em)  
-       tzero.em<-  age1[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
+       tzero.em<-  minage1-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
        
        mu.em.array<-array(NA,dim=c(1,No.comp,no.surveys))
        
@@ -74,6 +76,7 @@
        
        ##schnute fournier SD formula
        dyn.load(dynlib(paste(dllroot,"tmb/linearSD",sep="")))
+       dyn.load(dynlib(paste(dllroot,"tmb/linearSD_OBSLL",sep="")))
        s.em<-sigma.em[1]
        S.em<-sigma.em[2]
        sd.em<-NA
@@ -85,11 +88,12 @@
        
      }else if(SD.type==4){
        dyn.load(dynlib(paste(dllroot,"tmb/constantSD",sep="")))
+       dyn.load(dynlib(paste(dllroot,"tmb/constantSD_OBSLL",sep="")))
        
        
        linf.em<-(L.em-(l.em*k.reparam.em^(No.comp-1)))/(1-(k.reparam.em^(No.comp-1)))
        K.em <- -log(k.reparam.em)  
-       tzero.em<-  age1[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
+       tzero.em<-  minage1-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
        
        mu.em.array<-array(NA,dim=c(1,No.comp,no.surveys))
        
@@ -163,7 +167,7 @@
            
            if(SD.type==4) {
              
-             dyn.load(dynlib(paste(dllroot,"tmb/constantSD_OBSLL",sep="")))
+             
              loglik_nonvar_OBSLL <- MakeADFun(
                data = list(Lengths=Lengths_matrix,surveyyear=surveyyear,lambda=lambda.array,Components=Components,agezero=age1), 
                parameters = list(log_l=log(l.em),log_L=log(L.em),logit_k_reparam=qlogis(k.reparam.em),log_sigma=log(sigma.em)),  
@@ -174,6 +178,9 @@
              
              rep <- sdreport(loglik_nonvar_OBSLL)
              srep <- summary(rep)
+             
+             dyn.unload(dynlib(paste(dllroot,"tmb/constantSD",sep="")))
+             dyn.unload(dynlib(paste(dllroot,"tmb/constantSD_OBSLL",sep="")))  
              
              
            }else if(SD.type==3) {
@@ -190,13 +197,15 @@
              rep <- sdreport(loglik_var_OBSLL)
              srep <- summary(rep)
              
-             
+             dyn.unload(dynlib(paste(dllroot,"tmb/linearSD",sep="")))
+             dyn.unload(dynlib(paste(dllroot,"tmb/linearSD_OBSLL",sep="")))  
              
            }
            
            
            obs.llike <- obs.llike[!is.na(obs.llike)]
            sub.Obs<-sum(Lengths_matrix[Lengths_matrix[,3]<=sub.Obs.lim,4]*log(rowSums(worker.dens[Lengths_matrix[,3]<=sub.Obs.lim,])))
+           
            
            
            return(list(obs.llike=obs.llike,k.reparam.obs=k.reparam.obs,L.obs=L.obs,K.obs=K.obs,Linf.obs=Linf.obs,Mu=mu.em.array,Sd=sd.em,Lambda=lambda.array,
@@ -240,7 +249,7 @@
          
          linf.em<-(L.em-(l.em*k.reparam.em^(No.comp-1)))/(1-(k.reparam.em^(No.comp-1)))
          K.em <- -log(k.reparam.em)  
-         tzero.em<-  age1[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
+         tzero.em<-  minage1-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
          
          
          mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age1-tzero.em)))
@@ -278,7 +287,7 @@
          sigma.em<-exp(par1[4])          
          linf.em<-(L.em-(l.em*k.reparam.em^(No.comp-1)))/(1-(k.reparam.em^(No.comp-1)))
          K.em <- -log(k.reparam.em)  
-         tzero.em<-  age1[1]-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
+         tzero.em<-  minage1-((1/log(k.reparam.em))*log((L.em-l.em)/(L.em-(l.em*k.reparam.em^((No.comp-1)))))) 
          
          
          mu.em.array[1,1,]<- linf.em*(1-exp(-K.em*(age1-tzero.em)))
@@ -300,7 +309,14 @@
        
        if(k==niter){
          print("Reached max iterations and not converged")
-         print(paste("Result is after ",niter," M steps..."))        
+         print(paste("Result is after ",niter," M steps...")) 
+         
+         dyn.unload(dynlib(paste(dllroot,"tmb/constantSD",sep="")))
+         dyn.unload(dynlib(paste(dllroot,"tmb/constantSD_OBSLL",sep=""))) 
+         
+         dyn.unload(dynlib(paste(dllroot,"tmb/linearSD",sep="")))
+         dyn.unload(dynlib(paste(dllroot,"tmb/linearSD_OBSLL",sep=""))) 
+         
          return(list(obs.llike=obs.llike,Mu=mu.em.array,Sd=sd.em,Lambda=ifelse(lambda.array==(1 / No.comp),0,lambda.array),
                      k.reparam=k.reparam.em,K=K.em,Linf=linf.em,tzero=tzero.em,l=l.em,L=L.em,sigma=sigma.em))
        }

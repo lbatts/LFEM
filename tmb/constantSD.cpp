@@ -36,7 +36,7 @@ Type sigma= exp(log_sigma);
 int No_comp = Components.size() ;
 int no_surveys = lambda.cols() ;
 
-
+Type minagezero = min(agezero);
 
 array <Type> mu_arr(1,No_comp,no_surveys);
 
@@ -49,7 +49,7 @@ Type linf = (L-(l*(pow(k_reparam,No_comp-1))))/(1-(pow(k_reparam,No_comp-1)));
 Type K = -log(k_reparam);
    // std::cout << "K" << std::endl << K << std::endl << std::endl;
   
-Type tzero =  agezero[0]-((1/log(k_reparam))*log((L-l)/(L-(l*(pow(k_reparam,No_comp-1))))));
+Type tzero =  minagezero-((1/log(k_reparam))*log((L-l)/(L-(l*(pow(k_reparam,No_comp-1))))));
     //std::cout << "tzero" << std::endl << tzero << std::endl << std::endl;
 
 
