@@ -310,10 +310,10 @@
        if(k==niter){
          print("Reached max iterations and not converged")
          print(paste("Result is after ",niter," M steps...")) 
-         
+         if(SD.type==4){
          dyn.unload(dynlib(paste(dllroot,"tmb/constantSD",sep="")))
          dyn.unload(dynlib(paste(dllroot,"tmb/constantSD_OBSLL",sep=""))) 
-         
+         }else
          dyn.unload(dynlib(paste(dllroot,"tmb/linearSD",sep="")))
          dyn.unload(dynlib(paste(dllroot,"tmb/linearSD_OBSLL",sep=""))) 
          

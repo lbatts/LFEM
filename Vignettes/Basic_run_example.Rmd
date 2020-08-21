@@ -3,8 +3,8 @@ title: "Basic run example"
 author: "LB"
 date: "18 October 2018"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -67,7 +67,9 @@ How many years of data in each survey?  What year does data for each survey star
   year0<-c(2003,2003,2003)
 ```
 
-age1 is the assumed age of the first component in each of the surveys.  In this case we assume that for the first two surveys alphabetically (EVHOE and IE-IGFS) that the first component observed in the length frequency data is approximately 0.875 years old, using the common assumption fish are born on the 1st of Jan (i.e.  the midpoint of the fourth quarter of the year when these surveys are conducted).  SP-PORC is mainly conducted over september so we set the age1 at 0.73 
+age1 is the assumed age of the first component in each of the surveys.  In this case we assume that for the first two surveys alphabetically (EVHOE and IE-IGFS) that the first component observed in the length frequency data is approximately 0.875 years old, using the common assumption fish are born on the 1st of Jan (i.e.  the midpoint of the fourth quarter of the year when these surveys are conducted).  SP-PORC is mainly conducted over september so we set the age1 at 0.73.
+
+*NB* As of July 2020 parameters given in the results are for the survey with the earliest "age1". Prior to this they were for the first survey alphabetically.
 
 ```{r}
 age1<-c(0.875,0.875,0.73) 
